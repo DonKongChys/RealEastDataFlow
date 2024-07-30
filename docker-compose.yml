@@ -93,6 +93,7 @@ services:
 
 
 
+
   spark-master:
     <<: *spark-common
     command: bin/spark-class org.apache.spark.deploy.master.Master
