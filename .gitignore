@@ -1,2 +1,5 @@
 .env/
 .venv/
+.vscode/
+test.ipynb
+*.test
