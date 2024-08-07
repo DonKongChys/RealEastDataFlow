@@ -153,7 +153,7 @@ async def run(producer):
             time.sleep(random.uniform(1, 3))
             
             # Get data in detail
-            print(f"Navigating to the listing page... {data['link']}")
+            print(f"Navigating to the details page... {data['link']}")
             driver.get(data['link'])
             driver.implicitly_wait(10)
             
