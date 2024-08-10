@@ -1,11 +1,11 @@
 #!/bin/bash
-set e
+set -e
 
-$(command python) pip install --upgrade pip
+$(command -v python) -m pip install --upgrade pip
 
-if [-e "/opt/airflow/requirements.txt"]; then
-    $(command python) pip install --upgrade pip
-    $(command -v pip) install --user -r requirements.txt
+if [ -e "/opt/airflow/requirements.txt" ]; then
+    $(command -v python) -m pip install --upgrade pip
+    $(command -v pip) install --user -r /opt/airflow/requirements.txt
 fi
 
 if [ ! -f "/opt/airflow/airflow.db" ]; then

@@ -142,27 +142,36 @@ services:
   postgres:
     image: postgres:14.0
     environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
-    logging:
-      options:
-        max-size: 10m
-        max-file: "3"
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - datamasterylab
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   webserver:
     image: apache/airflow:2.6.0-python3.9
     command: webserver
     entrypoint: ['/opt/airflow/script/entrypoint.sh']
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
     environment:
       - LOAD_EX=n
       - EXECUTOR=Sequential
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW_WEBSERVER_SECRET_KEY=this_is_a_very_secured_key
+      # - AIRFLOW_WEBSERVER_SECRET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__WEBSERVER__SECRET_KEY=c2Ko7BAGEdn3uEu02frX9Q6n4DtBvwCwKu1xylW2YVw=
+      
+
     logging:
       options:
         max-size: 10m
@@ -171,35 +180,50 @@ services:
       - ./dags:/opt/airflow/dags
       - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
       - ./requirements/requirements.txt:/opt/airflow/requirements.txt
-    ports:
-      - "8080:8080"
-    healthcheck:
-      test: ['CMD-SHELL', "[ -f /opt/airflow/airflow-webserver.pid ]"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
+      - ./pipelines:/opt/airflow/pipelines
+
     networks:
       - datamasterylab
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   scheduler:
     image: apache/airflow:2.6.0-python3.9
+    command: bash -c "pip install -r /opt/airflow/requirements.txt && airflow db upgrade && airflow scheduler"
+    # entrypoint: ['/opt/airflow/script/entrypoint.sh']
     depends_on:
-      webserver:
+      postgres:
         condition: service_healthy
+    environment:
+      - LOAD_EX=n
+      - Executor=Sequential
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__WEBSERVER_BASE_URL=http://localhost:8080
+      # - AIRFLOW_WEBSERVER_SECRET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__WEBSERVER__SECRET_KEY=c2Ko7BAGEdn3uEu02frX9Q6n4DtBvwCwKu1xylW2YVw=
+
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - datamasterylab
     volumes:
       - ./dags:/opt/airflow/dags
       - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
       - ./requirements/requirements.txt:/opt/airflow/requirements.txt
-    environment:
-      - LOAD_EX=n
-      - EXECUTOR=Sequential
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW_WEBSERVER_SECRET_KEY=this_is_a_very_secured_key
-    command: bash -c "pip install -r ./requirements.txt && airflow db upgrade && airflow scheduler"
-    networks:
-      - datamasterylab
+      - ./pipelines:/opt/airflow/pipelines
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-
+volumes:
+  postgres_data:
 
 
 networks:
