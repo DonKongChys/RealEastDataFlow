@@ -12,6 +12,7 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from requests.exceptions import ConnectionError, Timeout
 from http.client import RemoteDisconnected
+from tqdm import tqdm
 
 
 
@@ -121,11 +122,12 @@ async def run(producer):
     # Disable loading images for faster crawling
     chrome_options.add_argument('--blink-settings=imagesEnabled=false')
     
-    # # Run Chrome in headless mode (detached)
-    # chrome_options.add_argument('--headless')
-    # chrome_options.add_argument('--disable-gpu')
-    # chrome_options.add_argument('--no-sandbox')
-    # chrome_options.add_argument('--disable-dev-shm-usage')
+    # Run Chrome in headless mode (detached)
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+
     
     # Use a realistic user-agent
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36')
@@ -136,7 +138,11 @@ async def run(producer):
     browser_executable_path = '/usr/bin/google-chrome'  # Update this path as needed
 
     driver = uc.Chrome(options=chrome_options, browser_executable_path=browser_executable_path)
-    driver.get("https://zoopla.co.uk")
+
+    # /html/body/div[5]/div[2]/div/div/div[2]/div/div/button[1]
+
+
+
     
     try:
         print(f"Navigating to {BASE_URL}")
@@ -145,8 +151,17 @@ async def run(producer):
         
         # Wait for Cloudflare to complete the challenge (adjust wait time if needed)
         driver.implicitly_wait(30)
-        time.sleep(10)
-        
+        time.sleep(5)
+
+        # Accept cookie
+        # Wait for Cloudflare to complete the challenge (adjust wait time if needed)
+        try:
+            button = driver.find_element(By.ID, "onetrust-accept-btn-handler")
+            button.click()  # Press the button
+            print("Button clicked successfully to accept cookie !!")
+        except Exception as e:
+            print(f"Can not find the button {e}")
+            
         # Get HTML after passing Cloudflare
         html = driver.page_source
         
@@ -157,7 +172,8 @@ async def run(producer):
         items = soup.findAll("div", class_="dkr2t83")
         
         all_data = []
-        for idx, div in enumerate(items):
+        # for idx, div in enumerate(items):
+        for idx, div in tqdm(enumerate(items), total=len(items), desc="Processing items"):
             data = {}
             data.update(
                 {'address': div.find("address").text,
@@ -170,7 +186,7 @@ async def run(producer):
             time.sleep(random.uniform(1, 3))
             
             # Get data in detail
-            print(f"Navigating to the details page... {data['link']}")
+            # print(f"Navigating to the details page... {data['link']}")
             driver.get(data['link'])
             driver.implicitly_wait(30)
             
@@ -188,17 +204,21 @@ async def run(producer):
             
             floor_plan = extract_floor_plan(soup)
             
-            data.update(property_details)
-            data.update(floor_plan)
+            try:
+                data.update(property_details)
+                data.update(floor_plan)
+            except Exception as e:
+                print(e)
 
             # print("Sending data to kafka...")
-            # producer.send("properties", value=json.dumps(data).encode('utf-8'))
+            # producer.send("properties", valuejson.dumps(data).encode('utf-8'))
             # print(data)
 
             all_data.append(data)
 
-        print("Data sent to kafka!")
-        with open(f"zoopla_data_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.json", "w", encoding="utf-8") as f:
+        # print("Data sent to kafka!")
+        print("Save the data to lake")
+        with open(f"data/zoopla_data_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.json", "w", encoding="utf-8") as f:
             json.dump(all_data, f, ensure_ascii=False, indent=4)
         
         print('Navigated! Scraping page content...')
@@ -208,96 +228,16 @@ async def run(producer):
         driver.quit()
 
 
-# async def fetch_data(driver, div):
-#     data = {}
-#     data.update(
-#         {'address': div.find("address").text,
-#          'title': div.find("h2").text,
-#          'link': BASE_URL + div.find("a")['href']}
-#     )
-    
-#     # Introduce a delay to mimic human behavior
-#     await asyncio.sleep(random.uniform(1, 3))
-    
-#     # Get data in detail
-#     print(f"Navigating to the details page... {data['link']}")
-#     driver.get(data['link'])
-#     await asyncio.sleep(10)  # Giả lập chờ đợi
-    
-#     # Find the element using the CSS selector
-#     content = driver.find_element(By.CSS_SELECTOR, "div[data-testid='listing-details-page']")
-#     soup = BeautifulSoup(content.get_attribute('innerHTML'), 'html.parser')
-    
-#     picture_section = soup.find('section', {'aria-labelledby': 'listing-gallery-heading'})
-#     pictures = extract_picture(picture_section)
-#     data['pictures'] = pictures
-    
-#     # Extract detail
-#     property_details = soup.select_one('div[class="_14bi3x331"]')
-#     property_details = extract_property_details(property_details)
-    
-#     floor_plan = extract_floor_plan(soup)
-    
-#     data.update(property_details)
-#     data.update(floor_plan)
-
-#     print(data)
-
-#     return data
-
-# async def run(producer):
-#     # Set chrome options
-#     chrome_options = uc.ChromeOptions()
-    
-#     # Disable loading images for faster crawling
-#     chrome_options.add_argument('--blink-settings=imagesEnabled=false')
-    
-#     # Run Chrome in headless mode (detached)
-#     chrome_options.add_argument('--headless')
-#     chrome_options.add_argument('--disable-gpu')
-#     chrome_options.add_argument('--no-sandbox')
-#     chrome_options.add_argument('--disable-dev-shm-usage')
-    
-#     # Use a realistic user-agent
-#     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36')
-    
-#     # Initialize undetected Chrome driver
-#     driver = uc.Chrome(options=chrome_options)
-    
-#     try:
-#         print(f"Navigating to {BASE_URL}")
-#         # Access URL
-#         driver.get("https://www.zoopla.co.uk/for-sale/property/london/?q=London&results_sort=newest_listings&search_source=home")
-        
-#         # Wait for Cloudflare to complete the challenge (adjust wait time if needed)
-#         driver.implicitly_wait(10)
-        
-#         # Get HTML after passing Cloudflare
-#         html = driver.page_source
-        
-#         soup = BeautifulSoup(html, 'html.parser')
-#         soup = soup.find("div", {"data-testid": "regular-listings"})
-        
-#         items = soup.findAll("div", class_="dkr2t83")
-        
-#         all_data = []
-#         tasks = []
-#         for idx, div in enumerate(items):
-#             tasks.append(fetch_data(driver, div))
-
-#         all_data = await asyncio.gather(*tasks)
-#         print(all_data)
-    
-#     finally:
-#         driver.quit()
 
 async def run_all_flow():
     # producer = KafkaProducer(bootstrap_servers=["localhost:9092"], max_block_ms=5000)
     producer = ""
-    # async with async_playwright() as playwright:
-    #     await run(playwright, producer)
     await run(producer)
 
 def run_scraping_task():
    asyncio.run(run_all_flow())
     # run_all_flow()
+
+
+# if __name__ == "__main__":
+#     run_scraping_task()

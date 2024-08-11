@@ -7,138 +7,139 @@ x-spark-common: &spark-common
     - datamasterylab
 
 services:
-  zookeeper: 
-    image: confluentinc/cp-zookeeper:7.7.0
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 2181", ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - datamasterylab
+  # zookeeper: 
+  #   image: confluentinc/cp-zookeeper:7.7.0
+  #   hostname: zookeeper
+  #   container_name: zookeeper
+  #   ports:
+  #     - "2181:2181"
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   healthcheck:
+  #     test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 2181", ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   networks:
+  #     - datamasterylab
 
 
-  kafka-broker:
-    image: confluentinc/cp-server:7.7.0
-    hostname: broker
-    container_name: broker
-    depends_on:
-      zookeeper:
-        condition: service_healthy
-    ports:
-      - "9092:9092"
-      - "9101:9101"
+  # kafka-broker:
+  #   image: confluentinc/cp-server:7.7.0
+  #   hostname: broker
+  #   container_name: broker
+  #   depends_on:
+  #     zookeeper:
+  #       condition: service_healthy
+  #   ports:
+  #     - "9092:9092"
+  #     - "9101:9101"
 
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: localhost
-      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
-      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
-      CONFLUENT_METRICS_ENABLE: 'false'
-      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
-    networks:
-      - datamasterylab
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 9092"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+  #     KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  #     KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  #     KAFKA_JMX_PORT: 9101
+  #     KAFKA_JMX_HOSTNAME: localhost
+  #     KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+  #     CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+  #     CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+  #     CONFLUENT_METRICS_ENABLE: 'false'
+  #     CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+  #   networks:
+  #     - datamasterylab
+  #   healthcheck:
+  #     test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 9092"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
-  control-center:
-    image: confluentinc/cp-enterprise-control-center:latest
-    hostname: control-center
-    container_name: control-center
-    depends_on:
-      kafka-broker:
-        condition: service_healthy
-    ports:
-      - "9021:9021"
-    environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka-broker:29092'
-      # CONTROL_CENTER_ZOOKEEPER_CONNECT: 'localhost:2181'
-      CONTROL_CENTER_REPLICATION_FACTOR: 1
-      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
-      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
-      CONFLUENT_METRICS_ENABLE: 'false'
-      PORT: 9021
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9021/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    networks:
-      - datamasterylab
-
-
+  # control-center:
+  #   image: confluentinc/cp-enterprise-control-center:latest
+  #   hostname: control-center
+  #   container_name: control-center
+  #   depends_on:
+  #     kafka-broker:
+  #       condition: service_healthy
+  #   ports:
+  #     - "9021:9021"
+  #   environment:
+  #     CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka-broker:29092'
+  #     # CONTROL_CENTER_ZOOKEEPER_CONNECT: 'localhost:2181'
+  #     CONTROL_CENTER_REPLICATION_FACTOR: 1
+  #     CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+  #     CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+  #     CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+  #     CONFLUENT_METRICS_ENABLE: 'false'
+  #     PORT: 9021
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9021/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 30s
+  #   networks:
+  #     - datamasterylab
 
 
-  spark-master:
-    <<: *spark-common
-    command: bin/spark-class org.apache.spark.deploy.master.Master
-    ports:
-      - "9090:8080"
-      - "7077:7077"
-    networks:
-      - datamasterylab
 
-  spark-worker: &spark-worker-image
-    <<: *spark-common
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_WORKER_MEMORY=1G  
-      - SPARK_WORKER_CORES=2
-      # - SPARK_USER=spark
-    networks:
-      - datamasterylab
+
+  # spark-master:
+  #   <<: *spark-common
+  #   command: bin/spark-class org.apache.spark.deploy.master.Master
+  #   ports:
+  #     - "9090:8080"
+  #     - "7077:7077"
+  #   networks:
+  #     - datamasterylab
+
+  # spark-worker: &spark-worker-image
+  #   <<: *spark-common
+  #   command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark:7077
+  #     - SPARK_WORKER_MEMORY=1G  
+  #     - SPARK_WORKER_CORES=2
+  #     # - SPARK_USER=spark
+  #   networks:
+  #     - datamasterylab
     
-  spark-worker-2:
-    <<: *spark-worker-image
+  # spark-worker-2:
+  #   <<: *spark-worker-image
 
-  spark-worker-3:
-    <<: *spark-worker-image
+  # spark-worker-3:
+  #   <<: *spark-worker-image
 
-  cassandra:
-    image: bitnami/cassandra:latest
-    container_name: cassandra
-    hostname: cassandra
-    ports:
-      - "9042:9042"
-    environment:
-      - CASSANDRA_USER=cassandra
-      - CASSANDRA_PASSWORD=cassandra
-      - MAX_HEAP_SIZE=512M
-      - HEAP_NEWSIZE=100m
-    volumes:
-      - ./cassandra-data:/var/lib/cassandra
-    networks:
-      - datamasterylab
+  # cassandra:
+  #   image: bitnami/cassandra:latest
+  #   container_name: cassandra
+  #   hostname: cassandra
+  #   ports:
+  #     - "9042:9042"
+  #   environment:
+  #     - CASSANDRA_USER=cassandra
+  #     - CASSANDRA_PASSWORD=cassandra
+  #     - MAX_HEAP_SIZE=512M
+  #     - HEAP_NEWSIZE=100m
+  #   volumes:
+  #     - ./cassandra-data:/var/lib/cassandra
+  #   networks:
+  #     - datamasterylab
   
+
   postgres:
     image: postgres:14.0
     environment:
@@ -155,8 +156,79 @@ services:
       timeout: 10s
       retries: 5
 
+  # webserver:
+  #   # image: apache/airflow:2.6.0-python3.9
+  #   build: .
+  #   command: webserver
+  #   entrypoint: ['/opt/airflow/script/entrypoint.sh']
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - LOAD_EX=n
+  #     - EXECUTOR=Sequential
+  #     - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+  #     # - AIRFLOW_WEBSERVER_SECRET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+  #     - AIRFLOW__WEBSERVER__SECRET_KEY=c2Ko7BAGEdn3uEu02frX9Q6n4DtBvwCwKu1xylW2YVw=
+      
+
+  #   logging:
+  #     options:
+  #       max-size: 10m
+  #       max-file: "3"
+  #   volumes:
+  #     - ./dags:/opt/airflow/dags
+  #     - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
+  #     - ./requirements/requirements.txt:/opt/airflow/requirements.txt
+  #     - ./pipelines:/opt/airflow/pipelines
+
+  #   networks:
+  #     - datamasterylab
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+
+  # scheduler:
+  #   # image: apache/airflow:2.6.0-python3.9
+  #   build: .
+  #   command: bash -c "pip install -r /opt/airflow/requirements.txt && airflow db upgrade && airflow scheduler"
+  #   # entrypoint: ['/opt/airflow/script/entrypoint.sh']
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     - LOAD_EX=n
+  #     - Executor=Sequential
+  #     - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+  #     - AIRFLOW__WEBSERVER_BASE_URL=http://localhost:8080
+  #     # - AIRFLOW_WEBSERVER_SECRET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+  #     - AIRFLOW__WEBSERVER__SECRET_KEY=c2Ko7BAGEdn3uEu02frX9Q6n4DtBvwCwKu1xylW2YVw=
+
+  #   logging:
+  #     options:
+  #       max-size: 10m
+  #       max-file: "3"
+  #   networks:
+  #     - datamasterylab
+  #   volumes:
+  #     - ./dags:/opt/airflow/dags
+  #     - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
+  #     - ./requirements/requirements.txt:/opt/airflow/requirements.txt
+  #     - ./pipelines:/opt/airflow/pipelines
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+
   webserver:
-    image: apache/airflow:2.6.0-python3.9
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: webserver
     entrypoint: ['/opt/airflow/script/entrypoint.sh']
     depends_on:
@@ -168,10 +240,7 @@ services:
       - LOAD_EX=n
       - EXECUTOR=Sequential
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      # - AIRFLOW_WEBSERVER_SECRET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
       - AIRFLOW__WEBSERVER__SECRET_KEY=c2Ko7BAGEdn3uEu02frX9Q6n4DtBvwCwKu1xylW2YVw=
-      
-
     logging:
       options:
         max-size: 10m
@@ -181,6 +250,7 @@ services:
       - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
       - ./requirements/requirements.txt:/opt/airflow/requirements.txt
       - ./pipelines:/opt/airflow/pipelines
+      - ./data:/opt/airflow/data
 
     networks:
       - datamasterylab
@@ -191,31 +261,31 @@ services:
       retries: 5
 
   scheduler:
-    image: apache/airflow:2.6.0-python3.9
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: bash -c "pip install -r /opt/airflow/requirements.txt && airflow db upgrade && airflow scheduler"
-    # entrypoint: ['/opt/airflow/script/entrypoint.sh']
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       - LOAD_EX=n
-      - Executor=Sequential
+      - EXECUTOR=Sequential
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       - AIRFLOW__WEBSERVER_BASE_URL=http://localhost:8080
-      # - AIRFLOW_WEBSERVER_SECRET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
       - AIRFLOW__WEBSERVER__SECRET_KEY=c2Ko7BAGEdn3uEu02frX9Q6n4DtBvwCwKu1xylW2YVw=
-
     logging:
       options:
         max-size: 10m
         max-file: "3"
-    networks:
-      - datamasterylab
     volumes:
       - ./dags:/opt/airflow/dags
       - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
       - ./requirements/requirements.txt:/opt/airflow/requirements.txt
       - ./pipelines:/opt/airflow/pipelines
+      - ./data:/opt/airflow/data
+    networks:
+      - datamasterylab
     healthcheck:
       test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob || exit 1"]
       interval: 30s

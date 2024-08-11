@@ -1,4 +1,5 @@
-FROM apache/airflow:2.5.1-python3.9
+# Dockerfile for Airflow webserver
+FROM apache/airflow:2.6.0-python3.9
 
 # Install dependencies
 USER root
@@ -30,3 +31,8 @@ USER airflow
 # Copy your DAGs and other files
 COPY dags /opt/airflow/dags
 COPY pipelines /opt/airflow/pipelines
+
+# Copy and install Python dependencies
+COPY requirements/requirements.txt /opt/airflow/requirements.txt
+RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
+

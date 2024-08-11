@@ -1,3 +1,2 @@
-vuong cookie capcha,
-airflow va schedular chua co chrome ne khong chay duoc
+
 chua tim thay duoc kakfa cluster 
