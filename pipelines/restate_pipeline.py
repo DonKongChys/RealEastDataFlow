@@ -13,6 +13,7 @@ from selenium.webdriver.common.by import By
 from requests.exceptions import ConnectionError, Timeout
 from http.client import RemoteDisconnected
 from tqdm import tqdm
+# from airflow.providers.apache.kafka.operators.produce import ProduceToTopicOper
 
 
 
@@ -158,7 +159,7 @@ async def run(producer):
         try:
             button = driver.find_element(By.ID, "onetrust-accept-btn-handler")
             button.click()  # Press the button
-            print("Button clicked successfully to accept cookie !!")
+            print("Button clicked successfully to accept cookie!!")
         except Exception as e:
             print(f"Can not find the button {e}")
             
@@ -172,8 +173,9 @@ async def run(producer):
         items = soup.findAll("div", class_="dkr2t83")
         
         all_data = []
-        # for idx, div in enumerate(items):
-        for idx, div in tqdm(enumerate(items), total=len(items), desc="Processing items"):
+        print("Crawling and sending to kakfa cluster...")
+        for idx, div in enumerate(items):
+        # for idx, div in tqdm(enumerate(items), total=len(items)):
             data = {}
             data.update(
                 {'address': div.find("address").text,
@@ -211,33 +213,33 @@ async def run(producer):
                 print(e)
 
             # print("Sending data to kafka...")
-            # producer.send("properties", valuejson.dumps(data).encode('utf-8'))
+            try:
+                # print("Sending to kafka...")
+                producer.send("properties", value=json.dumps(data).encode('utf-8'))
+            except Exception as e:
+                print(f"Can not send data into kakfa! {e}")
             # print(data)
 
             all_data.append(data)
+        print("Stopped crawl, data were sent to kafka!!!")
 
         # print("Data sent to kafka!")
-        print("Save the data to lake")
         with open(f"data/zoopla_data_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.json", "w", encoding="utf-8") as f:
             json.dump(all_data, f, ensure_ascii=False, indent=4)
-        
-        print('Navigated! Scraping page content...')
-    
+        print("Saved the data to lake")
     finally:
         print("Quitting driver...")
         driver.quit()
 
-
-
 async def run_all_flow():
-    # producer = KafkaProducer(bootstrap_servers=["localhost:9092"], max_block_ms=5000)
-    producer = ""
+    producer = KafkaProducer(bootstrap_servers=["broker:9092"], max_block_ms=5000, max_request_size=200000000 )
+    # producer = ""
     await run(producer)
 
 def run_scraping_task():
    asyncio.run(run_all_flow())
-    # run_all_flow()
 
 
-# if __name__ == "__main__":
-#     run_scraping_task()
+
+if __name__ == "__main__":
+    run_scraping_task()
