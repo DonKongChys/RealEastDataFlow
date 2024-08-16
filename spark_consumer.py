@@ -69,13 +69,14 @@ def main():
              .config("spark.cassandra.connection.host", "localhost")\
              .config("spark.jar.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0").getOrCreate()
 
-    kafka_broker = "localhost:9092"
+    # kafka_broker = "broker:29092"
+    kafka_broker = "localhost:19092"
     topic_name = "properties"
     kafka_df = spark \
         .readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", kafka_broker)\
-        .option("subcribe", topic_name)\
+        .option("subscribe", topic_name)\
         .option("startingOffsets", "earliest")\
         .load()
 
@@ -99,12 +100,34 @@ def main():
     kafka_df = kafka_df.selectExpr("CAST(value AS STRING) as value")\
         .select(from_json(col("value"), schema)).alias("data")\
         .select("data.*")
+    
+
+    # # Write the data to the console
+    # console_query = kafka_df.writeStream \
+    #     .outputMode("append") \
+    #     .format("console") \
+    #     .start()
+
+    # console_query.awaitTermination()
 
     cassandra_query = kafka_df.writeStream\
         .foreachBatch(
             lambda batch_df, batch_id: batch_df.foreach(
                 lambda row: insert_data(create_cassandra_session(), **row.asDict())))\
         .start().awaitTermination()
+
+    def write_to_cassandra(batch_df, batch_id):
+        batch_df.write \
+            .format("org.apache.spark.sql.cassandra") \
+            .mode("append") \
+            .options(table="properties", keyspace="realestate") \
+            .save()
+    
+    cassandra_query = kafka_df.writeStream\
+        .foreachBatch(write_to_cassandra)\
+        .start()
+    
+    cassandra_query.awaitTermination()
 
 if __name__ == "__main__":
     main()

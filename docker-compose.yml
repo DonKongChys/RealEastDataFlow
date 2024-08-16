@@ -27,8 +27,6 @@ services:
     networks:
       - datamasterylab
 
-
-
   broker:
     image: confluentinc/cp-server:7.7.0
     hostname: broker
@@ -45,10 +43,10 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:32181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_HOST_LOCAL:PLAINTEXT
       # KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092,PLAINTEXT_HOST_LOCAL://localhost:19092
       # KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092
       KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -69,11 +67,6 @@ services:
     healthcheck:
       test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 9092"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-
-
-
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:latest
@@ -102,28 +95,28 @@ services:
     networks:
       - datamasterylab
 
-  # spark-master:
-  #   <<: *spark-common
-  #   command: bin/spark-class org.apache.spark.deploy.master.Master
-  #   ports:
-  #     - "9090:8080"
-  #     - "7077:7077"
-  #   networks:
-  #     - datamasterylab
+  spark-master:
+    <<: *spark-common
+    command: bin/spark-class org.apache.spark.deploy.master.Master
+    ports:
+      - "9090:8080"
+      - "7077:7077"
+    networks:
+      - datamasterylab
 
-  # spark-worker: &spark-worker-image
-  #   <<: *spark-common
-  #   command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
-  #   depends_on:
-  #     - spark-master
-  #   environment:
-  #     - SPARK_MODE=worker
-  #     - SPARK_MASTER_URL=spark://spark:7077
-  #     - SPARK_WORKER_MEMORY=1G  
-  #     - SPARK_WORKER_CORES=2
-  #     # - SPARK_USER=spark
-  #   networks:
-  #     - datamasterylab
+  spark-worker: &spark-worker-image
+    <<: *spark-common
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G  
+      - SPARK_WORKER_CORES=2
+      # - SPARK_USER=spark
+    networks:
+      - datamasterylab
     
   # spark-worker-2:
   #   <<: *spark-worker-image
@@ -131,21 +124,21 @@ services:
   # spark-worker-3:
   #   <<: *spark-worker-image
 
-  # cassandra:
-  #   image: bitnami/cassandra:latest
-  #   container_name: cassandra
-  #   hostname: cassandra
-  #   ports:
-  #     - "9042:9042"
-  #   environment:
-  #     - CASSANDRA_USER=cassandra
-  #     - CASSANDRA_PASSWORD=cassandra
-  #     - MAX_HEAP_SIZE=512M
-  #     - HEAP_NEWSIZE=100m
-  #   volumes:
-  #     - ./cassandra-data:/var/lib/cassandra
-  #   networks:
-  #     - datamasterylab
+  cassandra:
+    image: bitnami/cassandra:latest
+    container_name: cassandra
+    hostname: cassandra
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=100m
+    volumes:
+      - ./cassandra-data:/var/lib/cassandra
+    networks:
+      - datamasterylab
   
 
   postgres:
