@@ -41,7 +41,7 @@ def extract_property_details(input):
     # print("Extracting property details....")
     prompt = f"""
         You are a data extractor model and you have been tasked with extracting information about the apartment for me into JSON.
-        Here is the div for the property details:
+        Here is the div for the property details, if none infomation field, let fill with empty string "", all field must be string:
 
         {input}
 
@@ -52,11 +52,11 @@ def extract_property_details(input):
             "bedrooms": "",
             "bathrooms": "",
             "receptions": "",
-            "EPC Rating": "",
+            "epc_rating": "",
             "tenure": "",
             "time_remaining_on_lease": "",
             "service_charge": "",
-            "countil_tax_band": "",
+            "council_tax_band": "",
             "ground_rent": ""
         }}
     """
@@ -112,7 +112,7 @@ def extract_floor_plan(soup):
     floor_plan = soup.find("div", {"data-testid": "floorplan-thumbnail-0"})
     if floor_plan:
         floor_plan_src = floor_plan.find("picture").find("source")['srcset']
-        plan["floor plan"] = floor_plan_src.split(' ')[0]
+        plan["floor_plan"] = floor_plan_src.split(' ')[0]
     return plan
 
 
@@ -174,8 +174,8 @@ async def run(producer):
         
         all_data = []
         print("Crawling and sending to kakfa cluster...")
-        for idx, div in enumerate(items):
-        # for idx, div in tqdm(enumerate(items), total=len(items)):
+        # for idx, div in enumerate(items):
+        for idx, div in tqdm(enumerate(items), total=len(items)):
             data = {}
             data.update(
                 {'address': div.find("address").text,
@@ -214,13 +214,14 @@ async def run(producer):
 
             # print("Sending data to kafka...")
             try:
-                # print("Sending to kafka...")
                 producer.send("properties", value=json.dumps(data).encode('utf-8'))
+                # print("Sending to kafka...")
             except Exception as e:
                 print(f"Can not send data into kakfa! {e}")
-            # print(data)
-
+            
+            # print(json.dumps(data).encode('utf-8'))
             all_data.append(data)
+
         print("Stopped crawl, data were sent to kafka!!!")
 
         # print("Data sent to kafka!")
@@ -232,9 +233,13 @@ async def run(producer):
         driver.quit()
 
 async def run_all_flow():
-    producer = KafkaProducer(bootstrap_servers=["broker:9092"], max_block_ms=5000, max_request_size=200000000 )
+    producer = KafkaProducer(bootstrap_servers=["localhost:19092"], max_block_ms=10000, max_request_size=200000000 ) # neu cahay tren airflow thi phai doi thanh broker
     # producer = ""
-    await run(producer)
+    try:
+        await run(producer)
+    finally:
+        producer.close()
+        print("Kafka producer connection closed.")
 
 def run_scraping_task():
    asyncio.run(run_all_flow())
@@ -243,3 +248,4 @@ def run_scraping_task():
 
 if __name__ == "__main__":
     run_scraping_task()
+    

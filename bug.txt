@@ -1,9 +1,11 @@
-chua ket noi duoc kafka va spark cluster
+Khi chay jobs voi nhiu work thi cassandra se bi crash
 
 
- spark-submit --master local[*] --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,com.datastax.spark:spark-cassandra-connector_2.12:3.4.0 spark_consumer.py
+run_command:
+--local or one host
+ spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,com.datastax.spark:spark-cassandra-connector_2.12:3.4.0 jobs/spark_consumer.py
+
+--cluster
+ spark-submit --master spark://172.18.0.2:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,com.datastax.spark:spark-cassandra-connector_2.12:3.4.0 jobs/spark_consumer.py
 
 
- spark-submit --master spark://localhost:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,com.datastax.spark:spark-cassandra-connector_2.12:3.4.0 spark_consumer.py
-
-spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0 spark_consumer.py
