@@ -1,4 +1,6 @@
 Khi chay jobs voi nhiu work thi cassandra se bi crash
+cassandra bi bug, thi thoan auto dead 
+broker cx lau lau tu chet
 
 
 run_command:

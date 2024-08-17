@@ -4,3 +4,4 @@
 env1/
 test.ipynb
 *.test
+pipelines/__pycache__/

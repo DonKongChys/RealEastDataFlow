@@ -44,7 +44,7 @@ def create_table(session):
 
 def create_cassandra_session():
     auth_provider = PlainTextAuthProvider(username="cassandra", password="cassandra")
-    session = Cluster(["cassandra-3"], auth_provider=auth_provider).connect() # chay localhost thi chuyen sang loclhost
+    session = Cluster(["cassandra"], auth_provider=auth_provider).connect() # chay localhost thi chuyen sang loclhost
     if session is not None:
         create_keyspace(session)
         create_table(session)
@@ -141,10 +141,10 @@ def main():
         .awaitTermination()
 
 if __name__ == "__main__":
-    # main()
+    main()
     
     
-    session = create_cassandra_session()
-    print("shut down session")
-    session.shutdown()
+    # session = create_cassandra_session()
+    # print("shut down session")
+    # session.shutdown()
 

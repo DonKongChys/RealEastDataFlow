@@ -233,7 +233,7 @@ async def run(producer):
         driver.quit()
 
 async def run_all_flow():
-    producer = KafkaProducer(bootstrap_servers=["localhost:19092"], max_block_ms=10000, max_request_size=200000000 ) # neu cahay tren airflow thi phai doi thanh broker
+    producer = KafkaProducer(bootstrap_servers=["broker:9092"], max_block_ms=10000, max_request_size=200000000 ) # neu cahay tren airflow thi phai doi thanh broker
     # producer = ""
     try:
         await run(producer)
