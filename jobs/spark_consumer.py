@@ -141,10 +141,10 @@ def main():
         .awaitTermination()
 
 if __name__ == "__main__":
-    main()
+    # main()
     
     
-    # session = create_cassandra_session()
-    # print("shut down session")
-    # session.shutdown()
+    session = create_cassandra_session()
+    print("shut down session")
+    session.shutdown()
 

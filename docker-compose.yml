@@ -7,6 +7,10 @@ x-spark-common: &spark-common
   networks:
     - datamasterylab
 
+networks:
+  datamasterylab:
+    driver: bridge
+
 services:
   zookeeper: 
     image: confluentinc/cp-zookeeper:7.7.0
@@ -128,32 +132,34 @@ services:
     <<: *spark-worker-image
 
   cassandra:
-    # image: bitnami/cassandra:latest
-    image: "bitnami/cassandra:latest"  # cassandra:4.1.3
+    image: bitnami/cassandra:4.0
+    # image: "cassandra:4.0"  # cassandra:4.1.3
     container_name: cassandra
     hostname: cassandra
     ports:
-      - "9042:9042"
+      - "9045:9042"
       # - "7000:7000"
     environment:
       - CASSANDRA_USER=cassandra
       - CASSANDRA_PASSWORD=cassandra
-      - MAX_HEAP_SIZE=512M
-      - HEAP_NEWSIZE=100m
+      - HOST_HOSTNAME=${HOSTNAME}
+      # - MAX_HEAP_SIZE=512M
+      # - HEAP_NEWSIZE=100m
       # - CASSANDRA_PASSWORD_SEEDER=yes
       # - CASSANDRA_SEEDS=cassandra,cassandra-1,cassandra-2
       # - CASSANDRA_SEEDS=cassandra
-
     networks:
       - datamasterylab
+    volumes:
+      - ./cassandra:/bitnami
     # restart:
     #   on-failure
-    healthcheck:
-      test: ["CMD-SHELL", "nodetool status | grep -q 'UN'"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+    # healthcheck:
+    #   test: ["CMD-SHELL", "nodetool status | grep -q 'UN'"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 40s
 
 
   # cassandra-1:
@@ -302,13 +308,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
-
-
-
-networks:
-  datamasterylab:
-    driver: bridge
 
 
 
