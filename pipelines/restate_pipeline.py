@@ -146,89 +146,6 @@ async def run(producer):
 
    
     try:
-        # print(f"Navigating to {BASE_URL}")
-        # # Access URL
-        # driver.get("https://www.zoopla.co.uk/for-sale/property/london/?q=London&results_sort=newest_listings&search_source=home")
-        # # https://www.zoopla.co.uk/for-sale/property/london/?q=London&results_sort=newest_listings&search_source=home&pn=2
-        # # Wait for Cloudflare to complete the challenge (adjust wait time if needed)
-        # driver.implicitly_wait(30)
-        # time.sleep(5)
-
-        # # Accept cookie
-        # # Wait for Cloudflare to complete the challenge (adjust wait time if needed)
-        # try:
-        #     button = driver.find_element(By.ID, "onetrust-accept-btn-handler")
-        #     button.click()  # Press the button
-        #     print("Button clicked successfully to accept cookie!!")
-        # except Exception as e:
-        #     print(f"Can not find the button {e}")
-            
-        # # Get HTML after passing Cloudflare
-        # html = driver.page_source
-        
-        
-        # soup = BeautifulSoup(html, 'html.parser')
-        # soup = soup.find("div", {"data-testid": "regular-listings"})
-        
-        # items = soup.findAll("div", class_="dkr2t83")
-        
-        # all_data = []
-        # print("Crawling and sending to kakfa cluster...")
-        # # for idx, div in enumerate(items):
-        # for idx, div in tqdm(enumerate(items), total=len(items)):
-        #     data = {}
-        #     data.update(
-        #         {'address': div.find("address").text,
-        #          'title': div.find("h2").text,
-        #          'link': BASE_URL + div.find("a")['href']}
-        #     )
-            
-            
-        #     # Introduce a delay to mimic human behavior
-        #     time.sleep(random.uniform(1, 3))
-            
-        #     # Get data in detail
-        #     # print(f"Navigating to the details page... {data['link']}")
-        #     driver.get(data['link'])
-        #     driver.implicitly_wait(30)
-            
-        #     # Find the element using the CSS selector
-        #     content = driver.find_element(By.CSS_SELECTOR, "div[data-testid='listing-details-page']")
-        #     soup = BeautifulSoup(content.get_attribute('innerHTML'), 'html.parser')
-            
-        #     picture_section = soup.find('section', {'aria-labelledby': 'listing-gallery-heading'})
-        #     pictures = extract_picture(picture_section)
-        #     data['pictures'] = pictures
-            
-        #     # Extract detail
-        #     property_details = soup.select_one('div[class="_14bi3x331"]')
-        #     property_details = extract_property_details(property_details)
-            
-        #     floor_plan = extract_floor_plan(soup)
-            
-        #     try:
-        #         data.update(property_details)
-        #         data.update(floor_plan)
-        #     except Exception as e:
-        #         print(e)
-
-        #     # print("Sending data to kafka...")
-        #     try:
-        #         producer.send("properties", value=json.dumps(data).encode('utf-8'))
-        #         # print("Sending to kafka...")
-        #     except Exception as e:
-        #         print(f"Can not send data into kakfa! {e}")
-            
-        #     # print(json.dumps(data).encode('utf-8'))
-        #     all_data.append(data)
-
-        # print("Stopped crawl, data were sent to kafka!!!")
-
-        # # print("Data sent to kafka!")
-        # with open(f"data/zoopla_data_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.json", "w", encoding="utf-8") as f:
-        #     json.dump(all_data, f, ensure_ascii=False, indent=4)
-        # print("Saved the data to lake")
-        
         
         
         page_num = 1
@@ -314,19 +231,24 @@ async def run(producer):
                     except Exception as e:
                         print(e)
 
-                    # try:
-                    #     producer.send("properties", value=json.dumps(data).encode('utf-8'))
-                    #     # print("Sending to kafka...")
-                    # except Exception as e:
-                    #     print(f"Can not send data into kakfa! {e}")
+                    try:
+                        producer.send("properties", value=json.dumps(data).encode('utf-8'))
+                        # print("Sending to kafka...")
+                    except Exception as e:
+                        print(f"Can not send data into kakfa! {e}")
                     
                     all_data.append(data)
                 # # increate page num
                 page_num += 1
+                if page_num == 6:
+                    break
                 
             except Exception as e:
                 print(e)
                 # driver.quit()
+                page_num += 1
+                if page_num == 6:
+                    break
                 continue
         with open(f"data/zoopla_data_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.json", "w", encoding="utf-8") as f:
             json.dump(all_data, f, ensure_ascii=False, indent=4)
@@ -339,8 +261,8 @@ async def run(producer):
 
 async def run_all_flow():
     # producer = KafkaProducer(bootstrap_servers=["broker:9092"], max_block_ms=10000, max_request_size=200000000 ) # neu cahay tren airflow thi phai doi thanh broker
-    producer = ""
-    # producer = KafkaProducer(bootstrap_servers=["localhost:19092"], max_block_ms=10000, max_request_size=200000000 ) # neu cahay tren airflow thi phai doi thanh broker
+    # producer = ""
+    producer = KafkaProducer(bootstrap_servers=["broker:29092"], max_block_ms=10000, max_request_size=200000000 ) # neu cahay tren airflow thi phai doi thanh broker
     
     try:
         await run(producer)

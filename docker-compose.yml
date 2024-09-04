@@ -1,6 +1,6 @@
 version: '3.8'
 x-spark-common: &spark-common
-  image:  bitnami/spark:3.5.1
+  image:  bitnami/spark:3.5.0
   volumes:
     - ./jobs:/opt/bitnami/spark/jobs
     - ./requirements:/opt/bitnami/spark/requirements
@@ -75,33 +75,34 @@ services:
     restart:
       on-failure
 
-  control-center:
-    image: confluentinc/cp-enterprise-control-center:latest
-    hostname: control-center
-    container_name: control-center
-    depends_on:
-      broker:
-        condition: service_healthy
-    ports:
-      - "9021:9021"
-    environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
-      # CONTROL_CENTER_ZOOKEEPER_CONNECT: 'localhost:2181'
-      CONTROL_CENTER_REPLICATION_FACTOR: 1
-      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
-      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
-      CONFLUENT_METRICS_ENABLE: 'false'
-      PORT: 9021
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9021/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    networks:
-      - datamasterylab
+  # control-center:
+  #   image: confluentinc/cp-enterprise-control-center:latest
+  #   hostname: control-center
+  #   container_name: control-center
+  #   depends_on:
+  #     broker:
+  #       condition: service_healthy
+  #   ports:
+  #     - "9021:9021"
+  #   environment:
+  #     CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
+  #     # CONTROL_CENTER_ZOOKEEPER_CONNECT: 'localhost:2181'
+  #     CONTROL_CENTER_REPLICATION_FACTOR: 1
+  #     CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+  #     CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+  #     CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+  #     CONFLUENT_METRICS_ENABLE: 'false'
+  #     PORT: 9021
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9021/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 30s
+  #   networks:
+  #     - datamasterylab
 
+  
   spark-master:
     <<: *spark-common
     command: bin/spark-class org.apache.spark.deploy.master.Master
@@ -111,7 +112,7 @@ services:
     networks:
       - datamasterylab
 
-  spark-worker: &spark-worker-image
+  spark-worker-1: &spark-worker-image
     <<: *spark-common
     command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     depends_on:
@@ -125,70 +126,67 @@ services:
     networks:
       - datamasterylab
     
-  spark-worker-2:
-    <<: *spark-worker-image
+  # spark-worker-2:
+  #   <<: *spark-worker-image
 
-  spark-worker-3:
-    <<: *spark-worker-image
+  # spark-worker-3:
+  #   <<: *spark-worker-image
 
   cassandra:
-    image: bitnami/cassandra:4.0
+    image: bitnami/cassandra:latest
     # image: "cassandra:4.0"  # cassandra:4.1.3
     container_name: cassandra
     hostname: cassandra
     ports:
-      - "9045:9042"
-      # - "7000:7000"
+      - "9042:9042"
+      - "7000:7000"
     environment:
       - CASSANDRA_USER=cassandra
       - CASSANDRA_PASSWORD=cassandra
-      - HOST_HOSTNAME=${HOSTNAME}
-      # - MAX_HEAP_SIZE=512M
-      # - HEAP_NEWSIZE=100m
-      # - CASSANDRA_PASSWORD_SEEDER=yes
-      # - CASSANDRA_SEEDS=cassandra,cassandra-1,cassandra-2
-      # - CASSANDRA_SEEDS=cassandra
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=100m
+      - CASSANDRA_PASSWORD_SEEDER=yes
+      - CASSANDRA_SEEDS=cassandra,cassandra-1
     networks:
       - datamasterylab
     volumes:
       - ./cassandra:/bitnami
     # restart:
     #   on-failure
-    # healthcheck:
-    #   test: ["CMD-SHELL", "nodetool status | grep -q 'UN'"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
-    #   start_period: 40s
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q 'UN'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
 
-  # cassandra-1:
-  #   image: "bitnami/cassandra:latest"
-  #   container_name: cassandra-1
-  #   hostname: cassandra-1
-  #   ports:
-  #     - "9043:9042"  # Expose port for clients (different port for each node)
-  #     - "7001:7000"  # Inter-node communication (different port)
-  #   environment:
-  #     - CASSANDRA_USER=cassandra
-  #     - CASSANDRA_PASSWORD=cassandra
-  #     - MAX_HEAP_SIZE=512M
-  #     - HEAP_NEWSIZE=100m
-  #     - CASSANDRA_PASSWORD_SEEDER=yes
-  #     # - CASSANDRA_SEEDS=cassandra
-  #     - CASSANDRA_SEEDS=cassandra,cassandra-1,cassandra-2
-
-  #   networks:
-  #     - datamasterylab
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "nodetool status | grep -q 'UN'"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 40s
-  #   # depends_on:
-  #   #   cassandra:
-  #   #     condition: service_healthy
+  cassandra-1:
+    image: "bitnami/cassandra:latest"
+    container_name: cassandra-1
+    hostname: cassandra-1
+    ports:
+      - "9043:9042"  # Expose port for clients (different port for each node)
+      - "7001:7000"  # Inter-node communication (different port)
+    environment:
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=100m
+      - CASSANDRA_PASSWORD_SEEDER=yes
+      # - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_SEEDS=cassandra,cassandra-1
+    networks:
+      - datamasterylab
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q 'UN'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    depends_on:
+      cassandra:
+        condition: service_healthy
   #   # restart:
   #   #   on-failure
 
@@ -218,7 +216,8 @@ services:
   #     start_period: 40s
   #   # depends_on:
   #   #   cassandra-1:
-  #   #     condition: service_healthy
+  #   #     condition: service_healthy1711
+
   #   # restart:
   #   #   on-failure
 
@@ -309,6 +308,39 @@ services:
       timeout: 10s
       retries: 5
 
+
+  # opscenter:
+  #   image: datastax/dse-opscenter:6.8.39
+  #   container_name: opscenter
+  #   hostname: opscenter
+  #   ports:
+  #     - "8888:8888"
+  #     - "61620:61620"
+  #   environment:
+  #     - DS_LICENSE=accept
+  #   networks:
+  #     - datamasterylab
+  #   # seed_node:
+  #   #   links:
+  #   #     - opscenter
+  #   # node:
+  #   #   links:
+    #     - opscenter
+
+  # dse-server:
+  #   image: datastax/dse-server:6.9.1
+  #   container_name: dse-server
+  #   hostname: dse-server
+  #   environment:
+  #     - DS_LICENSE=accept
+  #   depends_on:
+  #     - opscenter
+  #   links:
+  #     - opscenter
+  #   # ports:
+  #   #   - "9042:9042"
+  #   networks:
+  #     - datamasterylab
 
 
 

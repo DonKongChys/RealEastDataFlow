@@ -10,4 +10,5 @@ run_command:
 --cluster
  spark-submit --master spark://172.18.0.2:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0,com.datastax.spark:spark-cassandra-connector_2.12:3.4.0 jobs/spark_consumer.py
 
+ spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.0,com.datastax.spark:spark-cassandra-connector_2.13:3.5.0 jobs/spark_consumer.py
 

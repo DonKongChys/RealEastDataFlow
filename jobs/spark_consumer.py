@@ -44,7 +44,7 @@ def create_table(session):
 
 def create_cassandra_session():
     auth_provider = PlainTextAuthProvider(username="cassandra", password="cassandra")
-    session = Cluster(["cassandra"], auth_provider=auth_provider).connect() # chay localhost thi chuyen sang loclhost
+    session = Cluster(["cassandra-1"], auth_provider=auth_provider).connect() # chay localhost thi chuyen sang loclhost
     if session is not None:
         create_keyspace(session)
         create_table(session)
@@ -82,7 +82,7 @@ def main():
 
     spark = SparkSession.builder.appName("RealEstateConsumer")\
              .config("spark.cassandra.connection.host", "localhost")\
-             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0")\
+             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.5.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")\
              .getOrCreate()    
     # kafka_broker = "localhost:19092"
     kafka_broker = "broker:9092"
@@ -141,10 +141,10 @@ def main():
         .awaitTermination()
 
 if __name__ == "__main__":
-    # main()
+    main()
     
     
-    session = create_cassandra_session()
-    print("shut down session")
-    session.shutdown()
+    # session = create_cassandra_session()
+    # print("shut down session")
+    # session.shutdown()
 
